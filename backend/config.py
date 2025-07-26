@@ -1,0 +1,10 @@
+CHROMA_DIR = "chroma_store"
+UPLOAD_DIR = "uploads"
+
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
+SUMMARY_MODEL_NAME = "facebook/bart-large-cnn"
+
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 50
+SUMMARY_MAX_LENGTH = 150
+SUMMARY_MIN_LENGTH = 40

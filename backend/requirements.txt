@@ -1,0 +1,7 @@
+fastapi
+langchain_community
+chromadb
+pydantic
+sentence-transformers
+pypdf
+python-multipart

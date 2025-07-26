@@ -1,0 +1,5 @@
+chroma_store
+uploads
+.venv
+__pycache__
+
