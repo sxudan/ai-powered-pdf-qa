@@ -1,7 +1,7 @@
 from datetime import datetime
 from http.client import HTTPException
 from uuid import uuid4
-from fastapi import FastAPI, File, UploadFile, Depends, Form
+from fastapi import FastAPI, File, UploadFile, status
 from pydantic import BaseModel
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -109,3 +109,15 @@ def list_sessions():
             if os.path.isdir(os.path.join(CHROMA_DIR, name))
         ]
     }
+
+@app.delete("/session/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session(session_id: str):
+    session_dir = os.path.join(CHROMA_DIR, session_id)
+
+    if not os.path.exists(session_dir):
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        shutil.rmtree(session_dir)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {str(e)}")

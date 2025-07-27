@@ -7,6 +7,7 @@ import useSessionList from "../hooks/useSessionList";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import useCreateSession from "../hooks/useCreateSession";
+import useDeleteSession from "../hooks/useDeleteSession";
 
 const Sidebar = ({ currentSession }: { currentSession: string }) => {
   const { sessions, isLoading, refetchSessions } = useSessionList();
@@ -20,6 +21,7 @@ const Sidebar = ({ currentSession }: { currentSession: string }) => {
   );
 
   const { createSessions } = useCreateSession();
+  const { deleteSession } = useDeleteSession();
 
   useEffect(() => {
     if (currentSession) {
@@ -31,6 +33,21 @@ const Sidebar = ({ currentSession }: { currentSession: string }) => {
     const sessionId = await createSessions();
     router.push(`/ask/${sessionId}`);
   }, [createSessions, router]);
+
+  const handleDeleteSession = useCallback(
+    async (sessionId: string) => {
+      await deleteSession(sessionId);
+      const remainingSessions = sessions.filter(
+        (session) => session !== sessionId
+      );
+      if (remainingSessions.length > 0) {
+        router.push(`/ask/${remainingSessions[0]}`);
+      } else {
+        router.push("/ask");
+      }
+    },
+    [deleteSession, router, sessions]
+  );
 
   return (
     <div className="flex flex-col h-full bg-[#222] w-[200px] px-4 py-10 overflow-y-auto">
@@ -49,6 +66,7 @@ const Sidebar = ({ currentSession }: { currentSession: string }) => {
               onClick={() => handleOpenSession(session)}
               textStyle="text-sm"
               isActive={currentSession === session}
+              onClose={() => handleDeleteSession(session)}
             />
           ))}
         </div>

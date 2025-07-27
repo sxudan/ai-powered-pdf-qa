@@ -1,5 +1,6 @@
 import AppText from "@/features/components/AppText";
 import { cn } from "@/utils/cn";
+import { RiCloseFill } from "react-icons/ri";
 
 interface SidebarItemProps {
   title: string;
@@ -7,6 +8,7 @@ interface SidebarItemProps {
   textStyle?: string;
   onClick: () => void;
   isActive?: boolean;
+  onClose?: () => void;
 }
 
 const SidebarItem = ({
@@ -15,6 +17,7 @@ const SidebarItem = ({
   textStyle,
   onClick,
   isActive,
+  onClose,
 }: SidebarItemProps) => {
   return (
     <div
@@ -28,6 +31,11 @@ const SidebarItem = ({
       <AppText style={cn("text-white line-clamp-1", textStyle)}>
         {title}
       </AppText>
+      {onClose && (
+        <button onClick={onClose} className="text-white cursor-pointer">
+          <RiCloseFill />
+        </button>
+      )}
     </div>
   );
 };
