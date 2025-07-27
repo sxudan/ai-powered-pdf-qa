@@ -6,7 +6,7 @@ const useQA = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const ask = useCallback(async (question: string) => {
+  const ask = useCallback(async (question: string, sessionId: string) => {
     if (!question) return;
 
     try {
@@ -15,6 +15,7 @@ const useQA = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/qa`,
         {
           question,
+          session_id: sessionId,
         }
       );
       return response.data.answer as string;
@@ -27,7 +28,7 @@ const useQA = () => {
   }, []);
 
   const handleAsk = useCallback(
-    async (question: string) => {
+    async (question: string, sessionId: string) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -38,7 +39,7 @@ const useQA = () => {
         },
       ]);
       try {
-        const answer = await ask(question);
+        const answer = await ask(question, sessionId);
         setMessages((prev) => [
           ...prev,
           {

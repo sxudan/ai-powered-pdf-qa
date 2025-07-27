@@ -5,8 +5,9 @@ import useQA from "../hooks/useQA";
 import useUploadFile from "../hooks/useUploadFile";
 import ChatMessages from "./ChatMessages";
 
-const Chat = () => {
-  const { handleFileUpload, isUploading, fileUploaded } = useUploadFile();
+const Chat = ({ sessionId }: { sessionId: string }) => {
+  const { handleFileUpload, isUploading, fileUploaded } =
+    useUploadFile(sessionId);
   const { isLoading, handleAsk, messages } = useQA();
 
   return (
@@ -18,7 +19,7 @@ const Chat = () => {
         <div className="absolute bottom-10 w-full px-4 flex justify-center h-[100px] left-0">
           <ChatBox
             onFileChange={handleFileUpload}
-            onMessageSend={handleAsk}
+            onMessageSend={(question) => handleAsk(question, sessionId)}
             status={
               fileUploaded
                 ? "File uploaded successfully"
@@ -26,7 +27,6 @@ const Chat = () => {
                 ? "Uploading..."
                 : undefined
             }
-            disabled={!fileUploaded}
           />
         </div>
       </div>
