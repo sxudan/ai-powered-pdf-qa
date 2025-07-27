@@ -21,10 +21,10 @@ const Chat = ({ sessionId }: { sessionId: string }) => {
             onFileChange={handleFileUpload}
             onMessageSend={(question) => handleAsk(question, sessionId)}
             status={
-              fileUploaded
-                ? "File uploaded successfully"
-                : isUploading
+              isUploading
                 ? "Uploading..."
+                : fileUploaded
+                ? "File uploaded successfully"
                 : undefined
             }
           />
