@@ -53,3 +53,8 @@ npm install
 npm run dev
 ```
 The frontend will be available at: http://localhost:3000
+
+## Screenshots
+
+<img width="1512" height="762" alt="image" src="https://github.com/user-attachments/assets/e6113fb7-af49-45b7-8f69-50edeedb5876" />
+
