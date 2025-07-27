@@ -8,9 +8,10 @@ interface ChatBoxProps {
   onMessageSend: (message: string) => void;
   status?: string;
   disabled?: boolean;
+  fileType?: string[];
 }
 
-const ChatBox = ({ onFileChange, onMessageSend, status, disabled }: ChatBoxProps) => {
+const ChatBox = ({ onFileChange, onMessageSend, status, disabled, fileType = [".pdf", ".docx"] }: ChatBoxProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
 
@@ -57,6 +58,7 @@ const ChatBox = ({ onFileChange, onMessageSend, status, disabled }: ChatBoxProps
           type="file"
           className="hidden"
           onChange={handleFileInputChange}
+          accept={fileType.join(", ")}
         />
         {status && <p className="text-sm text-gray-500">{status}</p>}
       </div>

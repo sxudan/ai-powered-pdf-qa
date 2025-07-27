@@ -1,3 +1,5 @@
+"use client";
+
 import Chat from "@/features/chat/containers/Chat";
 
 const AskPage = () => {
