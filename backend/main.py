@@ -1,4 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, Depends
+from datetime import datetime
+from http.client import HTTPException
+from uuid import uuid4
+from fastapi import FastAPI, File, UploadFile, Depends, Form
 from pydantic import BaseModel
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -26,39 +29,38 @@ app.add_middleware(
 EMBEDDINGS = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 summarizer = pipeline("summarization", model=SUMMARY_MODEL_NAME)
 
-def get_vectordb():
-    return Chroma(
-        persist_directory=CHROMA_DIR,
-        embedding_function=EMBEDDINGS
-    )
 
 # Upload endpoint
-@app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    file_path = f"uploads/{file.filename}"
+@app.post("/upload/{session_id}")
+async def upload_file(session_id: str, file: UploadFile = File(...)):
+    session_dir = os.path.join(CHROMA_DIR, session_id)
+    if not os.path.exists(session_dir):
+        raise HTTPException(status_code=404, detail="Invalid session ID")
+
+    file_path = f"uploads/{session_id}_{file.filename}"
     os.makedirs("uploads", exist_ok=True)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Detect file type and load accordingly
+    # Load file
     if file.filename.lower().endswith(".pdf"):
         loader = PyPDFLoader(file_path)
     elif file.filename.lower().endswith(".docx"):
         loader = Docx2txtLoader(file_path)
     else:
-        return {"error": "Unsupported file type. Only PDF and DOCX are supported."}
+        return {"error": "Unsupported file type"}
 
     documents = loader.load()
     splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     chunks = splitter.split_documents(documents)
 
-    # Save to Chroma
-    Chroma.from_documents(
-        chunks,
-        EMBEDDINGS,
-        persist_directory=CHROMA_DIR
-    ).persist()
+    vectordb = Chroma(
+        persist_directory=session_dir,
+        embedding_function=EMBEDDINGS
+    )
+    vectordb.add_documents(chunks)
+    vectordb.persist()
 
     return {"status": "uploaded"}
 
@@ -66,9 +68,16 @@ async def upload_file(file: UploadFile = File(...)):
 # QA endpoint
 class QARequest(BaseModel):
     question: str
+    session_id: str
 
 @app.post("/qa")
-def answer_question(req: QARequest, vectordb = Depends(get_vectordb)):
+def answer_question(req: QARequest):
+    session_vector_dir = f"{CHROMA_DIR}/{req.session_id}"
+
+    if not os.path.exists(session_vector_dir):
+        raise HTTPException(status_code=404, detail="Invalid session ID")
+    
+    vectordb = Chroma(persist_directory=session_vector_dir, embedding_function=EMBEDDINGS)
     retriever = vectordb.as_retriever()
     docs = retriever.get_relevant_documents(req.question)
     context = "\n\n".join(doc.page_content for doc in docs)
@@ -77,4 +86,26 @@ def answer_question(req: QARequest, vectordb = Depends(get_vectordb)):
 
     return {
         "answer": summary[0]["summary_text"]
+    }
+
+@app.post("/session")
+def create_session():
+    session_id = str(uuid4())
+    session_dir = os.path.join(CHROMA_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=True)
+    
+    with open(os.path.join(session_dir, "created.meta"), "w") as f:
+        f.write(datetime.now().isoformat())
+
+    return {"session_id": session_id}
+
+@app.get("/sessions")
+def list_sessions():
+    if not os.path.exists(CHROMA_DIR):
+        return {"sessions": []}
+    return {
+        "sessions": [
+            name for name in os.listdir(CHROMA_DIR)
+            if os.path.isdir(os.path.join(CHROMA_DIR, name))
+        ]
     }
