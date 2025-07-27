@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Depends
 from pydantic import BaseModel
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -41,8 +41,14 @@ async def upload_file(file: UploadFile = File(...)):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Load and chunk PDF
-    loader = PyPDFLoader(file_path)
+    # Detect file type and load accordingly
+    if file.filename.lower().endswith(".pdf"):
+        loader = PyPDFLoader(file_path)
+    elif file.filename.lower().endswith(".docx"):
+        loader = Docx2txtLoader(file_path)
+    else:
+        return {"error": "Unsupported file type. Only PDF and DOCX are supported."}
+
     documents = loader.load()
     splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     chunks = splitter.split_documents(documents)

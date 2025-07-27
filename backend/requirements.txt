@@ -5,3 +5,4 @@ pydantic
 sentence-transformers
 pypdf
 python-multipart
+docx2txt
